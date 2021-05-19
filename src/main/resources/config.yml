@@ -1,0 +1,21 @@
+# CoinAPI by GueniPlayz
+
+# setup your mysql connection
+mysql:
+  host: "localhost"
+  port: 3306
+  database: "database"
+  username: "username"
+  password: "password"
+
+# general settings
+settings:
+  # enable/disable vault support
+  vault: false
+
+  # update interval that saves coins into database
+  update_interval:
+    # the ticks to wait before running the task for the first time
+    period: 600
+    # the the ticks to wait between runs
+    delay: 600

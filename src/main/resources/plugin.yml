@@ -1,0 +1,11 @@
+name: CoinAPI
+version: 2.0
+main: de.gueni.coins.CoinPlugin
+author: GueniPlayz
+api-version: 1.13
+description: a coinapi that supports vault
+website: http://gueniplayz.me
+database: true
+
+softdepend:
+  - Vault
