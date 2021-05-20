@@ -63,11 +63,10 @@ public class CoinUser {
         return loaded;
     }
 
-    // AtomicBoolean that is used in the login progess of the user
+    // AtomicBoolean that is used in the login progress of the user
     public void setLoaded( AtomicBoolean loaded ) {
         this.loaded = loaded;
     }
-
 
     /**
      * checks if the players account balance is higher than {@code coins}
@@ -114,7 +113,7 @@ public class CoinUser {
     public void setCoins( double coins ) {
         this.coins = coins;
         // Calling the task synchronously otherwise the AsyncPlayerPreLoginEvent will throw errors
-        Bukkit.getScheduler().runTask( CoinPlugin.getPlugin( CoinPlugin.class ), () -> Bukkit.getPluginManager().callEvent( new CoinsChangeEvent( uuid, coins ) ) );
+        Bukkit.getScheduler().runTask( CoinPlugin.getPlugin( CoinPlugin.class ), () -> Bukkit.getPluginManager().callEvent( new CoinsChangeEvent( uuid, coins, CoinsChangeEvent.ChangeType.USER ) ) );
     }
 
     /**

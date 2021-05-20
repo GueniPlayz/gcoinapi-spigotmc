@@ -2,6 +2,7 @@ package de.gueni.coins.listener;
 
 import de.gueni.coins.CoinPlugin;
 import de.gueni.coins.user.CoinUser;
+import net.kyori.adventure.text.ComponentBuilder;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

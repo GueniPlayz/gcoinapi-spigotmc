@@ -3,6 +3,7 @@ package de.gueni.coins.database;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -42,9 +43,6 @@ public class DBConnection {
      * @return the connection if its not null
      */
     public Connection getConnection() {
-        if ( !isConnected() )
-            connect();
-
         try {
             return this.getDataSource().getConnection();
         } catch ( SQLException exception ) {

@@ -1,6 +1,9 @@
 package de.gueni.coins.database;
 
 import de.gueni.coins.CoinPlugin;
+import de.gueni.coins.events.CoinsChangeEvent;
+import de.gueni.coins.user.CoinUser;
+import org.bukkit.Bukkit;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,11 +16,16 @@ import java.util.concurrent.ExecutionException;
 public class CoinHandler {
 
     private final DBConnection dbConnection;
+    private final CoinPlugin plugin;
 
     public CoinHandler( CoinPlugin plugin ) {
+        this.plugin = plugin;
         this.dbConnection = plugin.getDbConnection();
     }
 
+    /**
+     * creates the table (coin_table) with uuid CHAR(36) and coins DOUBLE
+     */
     public void createTable() {
         try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "CREATE TABLE IF NOT EXISTS coin_table (uuid CHAR(36), coins DOUBLE)" ) ) {
 
@@ -28,6 +36,10 @@ public class CoinHandler {
         }
     }
 
+    /**
+     * registers a player in the database if he does not exist
+     * @param uuid the uuid that should be registered
+     */
     public void register( UUID uuid ) {
         if ( !isRegistered( uuid ) ) {
             try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "INSERT INTO coin_table (uuid, coins) VALUES (?, ?)" ) ) {
@@ -43,7 +55,17 @@ public class CoinHandler {
         }
     }
 
-    public void setCoins( UUID uuid, double coins ) {
+    /**
+     * insert all coins of the users that are currently online to the database
+     */
+    public void updateCoinsForAllPlayers() {
+        for ( CoinUser user : CoinUser.getCoinUserMap().values() ) {
+            this.setCoinsWithoutEvent( user.getUUID(), user.getCoins() );
+        }
+    }
+
+    // this method is created because some users think reloading is a good idea and this method is the quickest and easiest? workaround
+    private void setCoinsWithoutEvent( UUID uuid, double coins ) {
         try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "UPDATE coin_table SET coins= ? WHERE uuid= ?" ) ) {
 
             preparedStatement.setDouble( 1, coins );
@@ -56,6 +78,30 @@ public class CoinHandler {
         }
     }
 
+    /**
+     * inserts the given amount of {@code coins} to the database
+     * @param uuid the uuid that should receive the coins
+     * @param coins the coins that should be inserted into the database
+     */
+    public void setCoins( UUID uuid, double coins ) {
+        try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "UPDATE coin_table SET coins= ? WHERE uuid= ?" ) ) {
+
+            preparedStatement.setDouble( 1, coins );
+            preparedStatement.setString( 2, uuid.toString() );
+
+            preparedStatement.executeUpdate();
+
+        } catch ( SQLException exception ) {
+            exception.printStackTrace();
+        }
+        Bukkit.getScheduler().runTask( this.plugin, () -> Bukkit.getPluginManager().callEvent( new CoinsChangeEvent( uuid, coins, CoinsChangeEvent.ChangeType.DATABASE ) ) );
+    }
+
+    /**
+     * gets the coins of the given uuid
+     * @param uuid the uuid that the coins should be retrieved from
+     * @return the coins of the user if there is no error otherwise -1
+     */
     public double getCoins( UUID uuid ) {
         try {
             return CompletableFuture.supplyAsync( () -> getCoinsSync( uuid ) ).get();
@@ -81,7 +127,12 @@ public class CoinHandler {
         return -1;
     }
 
-    private boolean isRegistered( UUID uuid ) {
+    /**
+     * checks if the user is registered
+     * @param uuid the uuid of the player that should be registered
+     * @return true if he is registered otherwise false
+     */
+    public boolean isRegistered( UUID uuid ) {
         try {
             return CompletableFuture.supplyAsync( () -> isRegisteredSync( uuid ) ).get();
         } catch ( InterruptedException | ExecutionException e ) {

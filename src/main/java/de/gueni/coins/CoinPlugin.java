@@ -2,6 +2,7 @@ package de.gueni.coins;
 
 import de.gueni.coins.database.CoinHandler;
 import de.gueni.coins.database.DBConnection;
+import de.gueni.coins.hook.PlaceholderAPIHook;
 import de.gueni.coins.hook.VaultHook;
 import de.gueni.coins.listener.AsyncPlayerPreLoginListener;
 import de.gueni.coins.listener.PlayerQuitListener;
@@ -9,10 +10,10 @@ import de.gueni.coins.user.CoinUser;
 import lombok.Getter;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
@@ -25,22 +26,27 @@ public class CoinPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         this.setup();
+
+        // in case of reload we get all current online players and "convert" them into CoinUsers then we set them their coins from the database
+        for ( Player player : Bukkit.getOnlinePlayers() ) {
+            CoinUser user = CoinUser.getUser( player );
+            user.setCoins( this.coinHandler.getCoins( player.getUniqueId() ) );
+        }
     }
 
     @Override
     public void onDisable() {
+
+        // in case of reload we get all current CoinUsers and insert their coins into the database
+        this.coinHandler.updateCoinsForAllPlayers();
+
         // Disconnecting from database
         this.dbConnection.disconnect();
     }
 
-    // TODO: hook placeholder api into the plugin
-    // TODO: comment CoinHandler.java
-    // TODO: check if vault functions well
-    // TODO: try to improve the scheduler logging
     // TODO: overview auf spigotmc machen
     // TODO: CoinSystem programmieren
     // TODO: System mit CoinUser erklären (für Leute die die API nutzen)
-    // TODO: File mit einprogrammieren
 
     private void setup() {
         this.saveDefaultConfig();
@@ -60,16 +66,13 @@ public class CoinPlugin extends JavaPlugin {
         // Checking if the plugin is not connected to mysql
         // If yes we disable the plugin
         if ( !this.dbConnection.isConnected() ) {
-            this.getLogger().log( Level.WARNING, "CoinAPI needs mysql to work!" );
+            this.getLogger().log( Level.WARNING, "§cCoinAPI needs mysql to work!" );
             Bukkit.getPluginManager().disablePlugin( this );
             return;
         }
 
-        // Hooking Vault into the plugin
-        if ( getConfig().getBoolean( "settings.vault" ) ) {
-            Bukkit.getServicesManager().register( Economy.class, new VaultHook( this ), this, ServicePriority.Normal );
-            this.getLogger().log( Level.INFO, "Hooked vault into the plugin!" );
-        }
+        // Hooking PlaceholderAPI and Vault into our plugin if enabled
+        this.hook();
 
         // Creating new instance of CoinHandler and creating the table
         this.coinHandler = new CoinHandler( this );
@@ -80,7 +83,7 @@ public class CoinPlugin extends JavaPlugin {
         new AsyncPlayerPreLoginListener( this );
         new PlayerQuitListener( this );
 
-        this.getLogger().log( Level.INFO, "Plugin started correctly!" );
+        this.getLogger().log( Level.INFO, "§aPlugin started correctly!" );
 
         // Starting task that updates every x-ticks players coins
         this.startTask();
@@ -96,12 +99,40 @@ public class CoinPlugin extends JavaPlugin {
             for ( CoinUser coinUser : CoinUser.getCoinUserMap().values() ) {
                 this.coinHandler.setCoins( coinUser.getUUID(), coinUser.getCoins() );
 
+                // Generating random int so the console is not spammed with save messages
                 if ( ThreadLocalRandom.current().nextInt( 6 ) == 0 ) {
-                    this.getLogger().log( Level.INFO, "Successfully saved coins into the database" );
+                    this.getLogger().log( Level.INFO, "§aSuccessfully saved coins into the database" );
                 }
             }
 
         }, this.getConfig().getInt( "settings.update_interval.delay" ) * 20L, this.getConfig().getInt( "settings.update_interval.period" ) * 20L );
+    }
+
+    /*
+    Method that hooks the wanted extension into the plugin
+    Can be disabled in the configuration
+     */
+    private void hook() {
+        // Hooking Vault into the plugin
+        if ( getConfig().getBoolean( "settings.vault" ) ) {
+            if ( !Bukkit.getPluginManager().getPlugin( "Vault" ).isEnabled() ) {
+                this.getLogger().log( Level.WARNING, "§cVault not found.. Disabling Vault-Support" );
+                return;
+            }
+            Bukkit.getServicesManager().register( Economy.class, new VaultHook( this ), this, ServicePriority.Normal );
+            this.getLogger().log( Level.INFO, "§aHooked Vault into the plugin!" );
+        }
+
+        // Hooking PlaceholderAPI into the plugin
+        if ( this.getConfig().getBoolean( "settings.placeholder_api" ) ) {
+            if ( !this.getServer().getPluginManager().getPlugin( "PlaceholderAPI" ).isEnabled() ) {
+                this.getLogger().log( Level.WARNING, "§cPlaceholderAPI not found.. Disabling Placeholder-Support" );
+                return;
+            }
+
+            new PlaceholderAPIHook( this ).register();
+            this.getLogger().log( Level.INFO, "§aHooked PlaceholderAPI into the plugin!" );
+        }
     }
 
 }

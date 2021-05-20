@@ -12,6 +12,8 @@ mysql:
 settings:
   # enable/disable vault support
   vault: false
+  # enable/disable placeholder_api support - Placeholders: %gcoinapi_coins%
+  placeholder_api: false
 
   # update interval that saves coins into database
   update_interval:
