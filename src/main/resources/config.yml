@@ -15,7 +15,7 @@ settings:
 
   # update interval that saves coins into database
   update_interval:
-    # the ticks to wait before running the task for the first time
-    period: 600
-    # the the ticks to wait between runs
-    delay: 600
+    # the amount of seconds to wait before running the task for the first time
+    period: 120
+    # the amount of seconds to wait between the next run
+    delay: 120

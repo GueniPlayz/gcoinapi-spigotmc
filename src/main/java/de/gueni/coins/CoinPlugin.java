@@ -12,6 +12,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 @Getter
@@ -22,7 +24,7 @@ public class CoinPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        setup();
+        this.setup();
     }
 
     @Override
@@ -33,6 +35,12 @@ public class CoinPlugin extends JavaPlugin {
 
     // TODO: hook placeholder api into the plugin
     // TODO: comment CoinHandler.java
+    // TODO: check if vault functions well
+    // TODO: try to improve the scheduler logging
+    // TODO: overview auf spigotmc machen
+    // TODO: CoinSystem programmieren
+    // TODO: System mit CoinUser erklären (für Leute die die API nutzen)
+    // TODO: File mit einprogrammieren
 
     private void setup() {
         this.saveDefaultConfig();
@@ -60,22 +68,22 @@ public class CoinPlugin extends JavaPlugin {
         // Hooking Vault into the plugin
         if ( getConfig().getBoolean( "settings.vault" ) ) {
             Bukkit.getServicesManager().register( Economy.class, new VaultHook( this ), this, ServicePriority.Normal );
-            this.getLogger().log( Level.FINE, "Hooked vault into the plugin!" );
+            this.getLogger().log( Level.INFO, "Hooked vault into the plugin!" );
         }
 
         // Creating new instance of CoinHandler and creating the table
         this.coinHandler = new CoinHandler( this );
-        coinHandler.createTable();
+        this.coinHandler.createTable();
 
 
         // Registering listeners
         new AsyncPlayerPreLoginListener( this );
         new PlayerQuitListener( this );
 
-        this.getLogger().log( Level.FINE, "Plugin started correctly!" );
+        this.getLogger().log( Level.INFO, "Plugin started correctly!" );
 
         // Starting task that updates every x-ticks players coins
-        startTask();
+        this.startTask();
     }
 
     /*
@@ -84,10 +92,16 @@ public class CoinPlugin extends JavaPlugin {
      */
     private void startTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously( this, () -> {
+
             for ( CoinUser coinUser : CoinUser.getCoinUserMap().values() ) {
-                coinHandler.setCoins( coinUser.getUUID(), coinUser.getCoins() );
+                this.coinHandler.setCoins( coinUser.getUUID(), coinUser.getCoins() );
+
+                if ( ThreadLocalRandom.current().nextInt( 6 ) == 0 ) {
+                    this.getLogger().log( Level.INFO, "Successfully saved coins into the database" );
+                }
             }
-        }, this.getConfig().getLong( "settings.update_interval.delay" ), this.getConfig().getLong( "settings.update_interval.period" ) );
+
+        }, this.getConfig().getInt( "settings.update_interval.delay" ) * 20L, this.getConfig().getInt( "settings.update_interval.period" ) * 20L );
     }
 
 }

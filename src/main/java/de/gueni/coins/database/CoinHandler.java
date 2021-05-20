@@ -2,6 +2,7 @@ package de.gueni.coins.database;
 
 import de.gueni.coins.CoinPlugin;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,7 +19,7 @@ public class CoinHandler {
     }
 
     public void createTable() {
-        try ( PreparedStatement preparedStatement = this.dbConnection.getConnection().prepareStatement( "CREATE TABLE IF NOT EXISTS coin_table (uuid CHAR(36), coins DOUBLE)" ) ) {
+        try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "CREATE TABLE IF NOT EXISTS coin_table (uuid CHAR(36), coins DOUBLE)" ) ) {
 
             preparedStatement.executeUpdate();
 
@@ -29,7 +30,7 @@ public class CoinHandler {
 
     public void register( UUID uuid ) {
         if ( !isRegistered( uuid ) ) {
-            try ( PreparedStatement preparedStatement = this.dbConnection.getConnection().prepareStatement( "INSERT INTO coin_table (uuid, coins) VALUES (?, ?)" ) ) {
+            try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "INSERT INTO coin_table (uuid, coins) VALUES (?, ?)" ) ) {
 
                 preparedStatement.setString( 1, uuid.toString() );
                 preparedStatement.setDouble( 2, 0.0 );
@@ -43,7 +44,7 @@ public class CoinHandler {
     }
 
     public void setCoins( UUID uuid, double coins ) {
-        try ( PreparedStatement preparedStatement = this.dbConnection.getConnection().prepareStatement( "UPDATE coin_table SET coins= ? WHERE uuid= ?" ) ) {
+        try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "UPDATE coin_table SET coins= ? WHERE uuid= ?" ) ) {
 
             preparedStatement.setDouble( 1, coins );
             preparedStatement.setString( 2, uuid.toString() );
@@ -65,7 +66,7 @@ public class CoinHandler {
     }
 
     private double getCoinsSync( UUID uuid ) {
-        try ( PreparedStatement preparedStatement = this.dbConnection.getConnection().prepareStatement( "SELECT coins FROM coin_table WHERE uuid = ?" ) ) {
+        try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "SELECT coins FROM coin_table WHERE uuid = ?" ) ) {
             preparedStatement.setString( 1, uuid.toString() );
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -90,7 +91,7 @@ public class CoinHandler {
     }
 
     private boolean isRegisteredSync( UUID uuid ) {
-        try ( PreparedStatement preparedStatement = this.dbConnection.getConnection().prepareStatement( "SELECT * FROM coin_table WHERE uuid= ?" ) ) {
+        try ( Connection connection = this.dbConnection.getConnection(); PreparedStatement preparedStatement = connection.prepareStatement( "SELECT * FROM coin_table WHERE uuid= ?" ) ) {
             preparedStatement.setString( 1, uuid.toString() );
 
             ResultSet resultSet = preparedStatement.executeQuery();
