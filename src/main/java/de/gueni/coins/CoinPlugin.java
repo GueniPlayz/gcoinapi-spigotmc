@@ -36,7 +36,6 @@ public class CoinPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
         // in case of reload we get all current CoinUsers and insert their coins into the database
         this.coinHandler.updateCoinsForAllPlayers();
 
@@ -77,7 +76,6 @@ public class CoinPlugin extends JavaPlugin {
         // Creating new instance of CoinHandler and creating the table
         this.coinHandler = new CoinHandler( this );
         this.coinHandler.createTable();
-
 
         // Registering listeners
         new AsyncPlayerPreLoginListener( this );
