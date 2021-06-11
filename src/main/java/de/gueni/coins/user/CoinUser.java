@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class CoinUser {
 
@@ -22,6 +23,7 @@ public class CoinUser {
     }
 
     /**
+     *
      * @param player the object of the player
      * @return the user object of the given player
      */
@@ -97,7 +99,7 @@ public class CoinUser {
     }
 
     /**
-     * gets the players coins
+     * gets the players coins shortened to 2 decimal places
      *
      * @return double the coins of the player
      */

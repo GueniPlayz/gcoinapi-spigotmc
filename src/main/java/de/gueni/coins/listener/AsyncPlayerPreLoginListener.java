@@ -5,7 +5,6 @@ import de.gueni.coins.user.CoinUser;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,7 +32,7 @@ public class AsyncPlayerPreLoginListener implements Listener {
         do {
 
             this.plugin.getCoinHandler().register( uuid );
-            user.setCoins( this.plugin.getCoinHandler().getCoins( uuid ) );
+            user.setCoins( this.plugin.getCoinHandler().getCoinsSync( uuid ) );
             user.setLoaded( new AtomicBoolean( true ) );
 
         } while ( !user.getLoaded().get() );

@@ -3,9 +3,13 @@ package de.gueni.coins.database;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import javax.annotation.Nullable;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class DBConnection {
 
@@ -37,9 +41,9 @@ public class DBConnection {
         }
     }
 
-
     /**
      * gets the connection from the datasource
+     *
      * @return the connection if its not null
      */
     public Connection getConnection() {
